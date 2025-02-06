@@ -1,7 +1,7 @@
-import { getQueryResults } from "./retrieve-documents.js";
+import { getQueryResults } from "./05.retrieve-documents.js";
 import { HfInference } from "@huggingface/inference";
 
-async function run() {
+async function generateResponses() {
   try {
     // Specify search query and retrieve relevant documents
     const query = "AI Technology";
@@ -22,24 +22,20 @@ async function run() {
         `;
     // Connect to Hugging Face, using the access token from the environment file
     const hf = new HfInference(process.env.HUGGING_FACE_ACCESS_TOKEN);
-    console.log(process.env.HUGGING_FACE_ACCESS_TOKEN);
     const llm = hf.endpoint(
       "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3"
     );
-    console.log("after llm");
     // Prompt the LLM to answer the question using the
     // retrieved documents as the context
-    console.log("before output");
     const output = await llm.chatCompletion({
       model: "mistralai/Mistral-7B-Instruct-v0.2",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 150,
     });
-    console.log("after output");
     // Output the LLM's response as text.
     console.log(output.choices[0].message.content);
   } catch (err) {
     console.log(err.stack);
   }
 }
-run().catch(console.dir);
+generateResponses().catch(console.dir);

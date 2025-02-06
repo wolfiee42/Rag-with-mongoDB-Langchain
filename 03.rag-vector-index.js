@@ -3,7 +3,8 @@ import { MongoClient } from "mongodb";
 // Connect to your Atlas cluster
 const client = new MongoClient(process.env.ATLAS_CONNECTION_STRING);
 
-async function run() {
+// creating a vector index
+async function createVectorIndex() {
   try {
     const database = client.db("rag_db");
     const collection = database.collection("test");
@@ -31,4 +32,4 @@ async function run() {
     await client.close();
   }
 }
-run().catch(console.dir);
+createVectorIndex().catch(console.dir);

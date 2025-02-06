@@ -1,6 +1,6 @@
-import { getQueryResults } from "./retrieve-documents.js";
+import { getQueryResults } from "./05.retrieve-documents.js";
 
-async function run() {
+async function testDocumentRetrieval() {
   try {
     const query = "What is the purpose of the document?";
     const documents = await getQueryResults(query);
@@ -12,4 +12,4 @@ async function run() {
     console.log(err.stack);
   }
 }
-run().catch(console.dir);
+testDocumentRetrieval().catch(console.dir);

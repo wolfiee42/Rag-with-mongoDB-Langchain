@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import getEmbeddings from "./get-embeddings.js";
+import getEmbeddings from "./02.get-embeddings.js";
 
 // Function to get the results of a vector query
 export async function getQueryResults(query) {

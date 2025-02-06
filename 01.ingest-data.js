@@ -1,10 +1,11 @@
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { MongoClient } from "mongodb";
-import getEmbeddings from "./get-embeddings.js";
+import getEmbeddings from "./02.get-embeddings.js";
 import * as fs from "fs";
 
-async function run() {
+// main function of the operation. i.e. starting of the operation
+async function ingestData() {
   const client = new MongoClient(process.env.ATLAS_CONNECTION_STRING);
 
   try {
@@ -53,4 +54,4 @@ async function run() {
     await client.close();
   }
 }
-run().catch(console.dir);
+ingestData().catch(console.dir);
