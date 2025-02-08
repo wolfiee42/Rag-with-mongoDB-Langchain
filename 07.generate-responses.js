@@ -4,7 +4,7 @@ import { HfInference } from "@huggingface/inference";
 async function generateResponses() {
   try {
     // Specify search query and retrieve relevant documents
-    const query = "AI Technology";
+    const query = "Context";
     const documents = await getQueryResults(query);
 
     // Build a string representation of the retrieved documents to use in the prompt
@@ -13,7 +13,7 @@ async function generateResponses() {
       textDocuments += doc.document.pageContent;
     });
     const question =
-      "In a few sentences, what are MongoDB's latest AI announcements?";
+      "can you explain the importance of the topic in our life based on the given context? make it short and concise and bullet points";
 
     // Create a prompt consisting of the question and context to pass to the LLM
     const prompt = `Answer the following question based on the given context.

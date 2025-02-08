@@ -5,10 +5,10 @@
 
 ### Scripts you should run in this order:
 
-- `node --env-file=.env ingest-data.js`
-- `node --env-file=.env rag-vector-index.js`
-- `node --env-file=.env retrieve-documents-test.js`
-- `node --env-file=.env generate-responses.js`
+- `node --env-file=.env 01.ingest-data.js`
+- `node --env-file=.env 03.rag-vector-index.js`
+- `node --env-file=.env 04.retrieve-documents-test.js`
+- `node --env-file=.env 07.generate-responses.js`
 
 ### references
 

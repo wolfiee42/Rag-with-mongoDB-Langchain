@@ -11,7 +11,7 @@ async function ingestData() {
   try {
     // Save online PDF as a file
     const rawData = await fetch(
-      "https://www.article19.org/wp-content/uploads/2018/09/YouTube-Community-Guidelines-August-2018.pdf"
+      "https://pub-5cd27299eac74caa8dfae0dc8ee78e15.r2.dev/test-bucket/Oedipus-Rex-LitChart.pdf"
     );
     const pdfBuffer = await rawData.arrayBuffer();
     const pdfData = Buffer.from(pdfBuffer);
@@ -35,19 +35,26 @@ async function ingestData() {
 
     console.log("Generating embeddings and inserting documents.");
     let docCount = 0;
-    await Promise.all(
-      docs.map(async (doc) => {
-        const embeddings = await getEmbeddings(doc.pageContent);
 
-        // Insert the embeddings and the chunked PDF data into Atlas
-        await collection.insertOne({
-          document: doc,
-          embedding: embeddings,
-        });
-        docCount += 1;
-      })
-    );
-    console.log(`Successfully inserted ${docCount} documents.`);
+    // Process documents in batches of 50
+    const batchSize = 50;
+    for (let i = 0; i < docs.length; i += batchSize) {
+      const batch = docs.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map(async (doc) => {
+          const embeddings = await getEmbeddings(doc.pageContent);
+
+          // Insert the embeddings and the chunked PDF data into Atlas
+          await collection.insertOne({
+            document: doc,
+            embedding: embeddings,
+          });
+          docCount += 1;
+        })
+      );
+      console.log(`Successfully inserted ${docCount} documents in this batch.`);
+    }
+    console.log(`Successfully inserted a total of ${docCount} documents.`);
   } catch (err) {
     console.log(err.stack);
   } finally {
