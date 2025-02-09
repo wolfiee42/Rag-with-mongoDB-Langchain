@@ -12,12 +12,14 @@ async function generateResponses() {
     documents.forEach((doc) => {
       textDocuments += doc.document.pageContent;
     });
-    const question =
+    const input =
       "can you explain the importance of the topic in our life based on the given context? make it short and concise and bullet points";
-
+    const whoAreYou =
+      "You are a scientist who is an expert in the field of science and technology. and recently published a paper on the topic of quran in science and technology. and your publish paper is attacted to you by the context. ";
     // Create a prompt consisting of the question and context to pass to the LLM
-    const prompt = `Answer the following question based on the given context.
-            Question: {${question}}
+    const prompt = `Analysis the given input, based on the given context.
+            Who are you? : {${whoAreYou}}
+            Input: {${input}}
             Context: {${textDocuments}}
         `;
     // Connect to Hugging Face, using the access token from the environment file

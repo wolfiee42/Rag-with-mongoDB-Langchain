@@ -11,13 +11,13 @@ async function ingestData() {
   try {
     // Save online PDF as a file
     const rawData = await fetch(
-      "https://pub-5cd27299eac74caa8dfae0dc8ee78e15.r2.dev/test-bucket/Oedipus-Rex-LitChart.pdf"
+      "https://pub-5cd27299eac74caa8dfae0dc8ee78e15.r2.dev/test-bucket/Sci.Tech-RevandScience.pdf"
     );
     const pdfBuffer = await rawData.arrayBuffer();
     const pdfData = Buffer.from(pdfBuffer);
-    fs.writeFileSync("youtube-community-guideline.pdf", pdfData);
+    fs.writeFileSync("Sci.Tech-RevandScience.pdf", pdfData);
 
-    const loader = new PDFLoader(`youtube-community-guideline.pdf`);
+    const loader = new PDFLoader(`Sci.Tech-RevandScience.pdf`);
     const data = await loader.load();
 
     // Chunk the text from the PDF
