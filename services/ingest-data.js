@@ -42,23 +42,28 @@ async function ingestData() {
       const batch = docs.slice(i, i + batchSize);
       await Promise.all(
         batch.map(async (doc) => {
-          const embeddings = await getEmbeddings(doc.pageContent);
+          try {
+            const embeddings = await getEmbeddings(doc.pageContent);
 
-          // Insert the embeddings and the chunked PDF data into Atlas
-          await collection.insertOne({
-            document: doc,
-            embedding: embeddings,
-          });
-          docCount += 1;
+            // Insert the embeddings and the chunked PDF data into Atlas
+            await collection.insertOne({
+              document: doc,
+              embedding: embeddings,
+            });
+            docCount += 1;
+          } catch (insertError) {
+            console.error("Error inserting document:", insertError);
+          }
         })
       );
       console.log(`Successfully inserted ${docCount} documents in this batch.`);
     }
     console.log(`Successfully inserted a total of ${docCount} documents.`);
   } catch (err) {
-    console.log(err.stack);
+    console.error(`Error during ingestData execution: ${err.message}`);
   } finally {
     await client.close();
   }
 }
-ingestData().catch(console.dir);
+
+export default ingestData;
