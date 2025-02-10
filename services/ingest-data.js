@@ -1,8 +1,7 @@
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { MongoClient } from "mongodb";
 import getEmbeddings from "./get-embeddings.js";
-import * as fs from "fs";
+import fs from "fs";
 
 // main function of the operation. i.e. starting of the operation
 
@@ -11,8 +10,6 @@ import * as fs from "fs";
  * each chunk, and inserts the chunked PDF data along with embeddings into an Atlas cluster in batches.
  */
 async function ingestData() {
-  const client = new MongoClient(process.env.ATLAS_CONNECTION_STRING);
-
   try {
     // * step 1: getting the pdf file from the r2 bucket
     const rawData = await fetch(
@@ -72,9 +69,7 @@ async function ingestData() {
     console.log(`Successfully inserted a total of ${docCount} documents.`);
   } catch (err) {
     console.error(`Error during ingestData execution: ${err.message}`);
-  } finally {
-    await client.close();
-  }
+  } 
 }
 
 export default ingestData;

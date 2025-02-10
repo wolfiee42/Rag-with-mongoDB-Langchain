@@ -1,13 +1,13 @@
 import { s3 } from "../utils/s3Client.js";
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
-import pdfModel from "../utils/pdfModel.js";
 import ingestData from "../services/ingest-data.js";
 import createVectorIndex from "../services/rag-vector-index.js";
 import generateResponses from "../services/generate-responses.js";
 import testDocumentRetrieval from "../services/retrieve-documents-test.js";
+import pdfModel from "../models/pdfModel.js";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
+// * file upload
 const uploadPDFToR2 = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -69,7 +69,7 @@ const uploadPDFToR2 = async (req, res) => {
   }
 };
 
-// scraping the file and uploading the file to the database
+// * scraping the file and uploading the file to the database
 const fileUpload = async (req, res) => {
   try {
     const uploadingFile = await ingestData();
@@ -86,7 +86,7 @@ const fileUpload = async (req, res) => {
   }
 };
 
-// creating the vector index
+// * creating the vector index
 const vectorIndex = async (req, res) => {
   try {
     const vectorIndex = await createVectorIndex();
@@ -103,7 +103,7 @@ const vectorIndex = async (req, res) => {
   }
 };
 
-// generateResponses
+// * generateResponses
 const generateResponsesFromAI = async (req, res) => {
   const { whoAreYou, input } = req.body;
   try {
@@ -117,7 +117,7 @@ const generateResponsesFromAI = async (req, res) => {
   }
 };
 
-// test Document
+// * test Document
 const testDocument = async (req, res) => {
   const documents = await testDocumentRetrieval();
   res.status(200).json({
@@ -125,6 +125,7 @@ const testDocument = async (req, res) => {
     response: documents,
   });
 };
+
 export const controller = {
   fileUpload,
   vectorIndex,
