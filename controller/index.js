@@ -70,7 +70,7 @@ const uploadPDFToR2 = async (req, res) => {
   try {
     if (!req.file) return res.status(400).send("No file uploaded");
 
-    // * Step 1: Upload the PDF to R2
+    // * Upload the PDF to R2
     const key = `pdfs/${Date.now()}_${req.file.originalname}`;
     const params = {
       Bucket: process.env.BUCKET_NAME,
@@ -81,18 +81,31 @@ const uploadPDFToR2 = async (req, res) => {
 
     await s3.send(new PutObjectCommand(params));
 
-    // * Step 2: Generate a signed URL for accessing the file
-    // const getParams = { Bucket: process.env.BUCKET_NAME, Key: key };
-    // const command = new GetObjectCommand(getParams);
-    // const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
-
+    // * Get the public URL of the uploaded PDF
     const r2PublicURL = `${process.env.BUCKET_URL}/${key}`;
 
-    // * Step 3: Store the file metadata in MongoDB
+    // * first check if the pdf already exists in the database
+    const existingPDF = await pdfModel.findOne();
+    // * If it does, update the existing record
+    if (existingPDF) {
+      existingPDF.key = key;
+      existingPDF.url = r2PublicURL;
+
+      await existingPDF.save();
+
+      await session.commitTransaction();
+      session.endSession();
+      return res.json({
+        message: "PDF updated successfully",
+        key,
+        url: r2PublicURL,
+      });
+    }
+
+    // * If it doesn't, create a new record in the database
     const pdfData = new pdfModel({
       key,
       url: r2PublicURL,
-      // url: signedUrl,
       uploadedAt: new Date(),
     });
 
@@ -102,7 +115,7 @@ const uploadPDFToR2 = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.json({ message: "Upload successful", key, url: r2PublicURL });
+    res.json({ message: "PDF Stored Successfully", key, url: r2PublicURL });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
