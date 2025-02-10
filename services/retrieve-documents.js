@@ -11,15 +11,15 @@ export async function getQueryResults(query) {
     const queryEmbeddings = await getEmbeddings(query);
 
     await client.connect();
-    const db = client.db("rag_db");
-    const collection = db.collection("test");
+    const db = client.db("test");
+    const collection = db.collection("ingesteddocuments");
 
     const pipeline = [
       {
         $vectorSearch: {
-          index: "vector_index",
+          index: "vector_index_v1",
           queryVector: queryEmbeddings,
-          path: "embedding",
+          path: "chunks.embedding",
           exact: true,
           limit: 5,
         },
@@ -27,7 +27,7 @@ export async function getQueryResults(query) {
       {
         $project: {
           _id: 0,
-          document: 1,
+          chunks: 1,
         },
       },
     ];

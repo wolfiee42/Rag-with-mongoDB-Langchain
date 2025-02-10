@@ -12,13 +12,12 @@ const client = new MongoClient(process.env.ATLAS_CONNECTION_STRING);
  */
 async function createVectorIndex() {
   try {
-    // Use the correct database (change "test" if needed)
     const db = client.db("test");
     const collection = db.collection("ingesteddocuments");
     console.log("creating vector index");
     // * step 3: defining the atlas vector search index
     const index = {
-      name: "vector_index",
+      name: "vector_index_v1",
       type: "vectorSearch",
       definition: {
         fields: [

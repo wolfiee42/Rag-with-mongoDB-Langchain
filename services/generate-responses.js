@@ -9,11 +9,12 @@ async function generateResponses({ whoAreYou, input }) {
     // Specify search query and retrieve relevant documents
     const query = "Context";
     const documents = await getQueryResults(query);
+    console.log("documents", documents);
 
     // Build a string representation of the retrieved documents to use in the prompt
     let textDocuments = "";
     documents.forEach((doc) => {
-      textDocuments += doc.document.pageContent;
+      textDocuments += doc.chunks;
     });
     // const input =
     //   "can you explain the importance of the topic in our life based on the given context? make it short and concise and bullet points";
