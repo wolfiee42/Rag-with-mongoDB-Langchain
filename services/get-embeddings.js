@@ -1,9 +1,12 @@
 import { pipeline } from "@xenova/transformers";
 
 // Function to generate embeddings for a given data source
-// the purpose of this function is to convert input data (like text) into numerical
-// representations (embeddings) that can be used for various machine learning tasks,
-// such as similarity comparison, clustering, or as input features for other models.
+
+/**
+ * The purpose of this function is to convert input data (like text) into numerical
+ * representations (embeddings) that can be used for various machine learning tasks,
+ * such as similarity comparison, clustering, or as input features for other models.
+ */
 
 async function getEmbedding(data) {
   const embedder = await pipeline(

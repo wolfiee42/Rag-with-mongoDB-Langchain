@@ -1,15 +1,24 @@
 import { MongoClient } from "mongodb";
-
+import dotenv from "dotenv";
 // Connect to your Atlas cluster
+
+/**
+ * The purpose of this function is to create a vector index in the Atlas cluster.
+ */
+
+// * step 0: loading the environment variables
+dotenv.config({ path: ".env" });
+
+// * step 1: connecting to the atlas cluster
 const client = new MongoClient(process.env.ATLAS_CONNECTION_STRING);
 
-// creating a vector index
+// * step 2: creating a vector index
 async function createVectorIndex() {
   try {
     const database = client.db("rag_db");
     const collection = database.collection("test");
 
-    // Define your Atlas Vector Search index
+    // * step 3: defining the atlas vector search index
     const index = {
       name: "vector_index",
       type: "vectorSearch",
@@ -25,11 +34,11 @@ async function createVectorIndex() {
       },
     };
 
-    // Call the method to create the index
+    // * step 4: calling the method to create the index
     const result = await collection.createSearchIndex(index);
     console.log(result);
   } finally {
     await client.close();
   }
 }
-createVectorIndex().catch(console.dir);
+export default createVectorIndex;

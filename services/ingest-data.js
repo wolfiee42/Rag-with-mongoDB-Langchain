@@ -1,7 +1,7 @@
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { MongoClient } from "mongodb";
-import getEmbeddings from "./02.get-embeddings.js";
+import getEmbeddings from "./get-embeddings.js";
 import * as fs from "fs";
 
 // main function of the operation. i.e. starting of the operation
