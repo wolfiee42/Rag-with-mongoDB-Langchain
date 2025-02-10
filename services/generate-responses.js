@@ -13,9 +13,13 @@ async function generateResponses({ whoAreYou, input }) {
 
     // Build a string representation of the retrieved documents to use in the prompt
     let textDocuments = "";
-    documents.forEach((doc) => {
-      textDocuments += doc.chunks;
+    documents.forEach((document) => {
+      document.chunks.forEach((chunk) => {
+        textDocuments += chunk.text + "\n";
+      });
     });
+    console.log("textDocuments", textDocuments);
+
     // const input =
     //   "can you explain the importance of the topic in our life based on the given context? make it short and concise and bullet points";
     // const whoAreYou =
