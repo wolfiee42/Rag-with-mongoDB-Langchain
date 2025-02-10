@@ -1,9 +1,13 @@
 import ingestData from "../services/ingest-data.js";
 import createVectorIndex from "../services/rag-vector-index.js";
+import generateResponses from "../services/generate-responses.js";
+import testDocumentRetrieval from "../services/retrieve-documents-test.js";
+
 const method1 = (req, res) => {
   res.json({ message: "Hello World" });
 };
 
+// scraping the file and uploading the file to the database
 const fileUpload = async (req, res) => {
   try {
     const uploadingFile = await ingestData();
@@ -20,6 +24,7 @@ const fileUpload = async (req, res) => {
   }
 };
 
+// creating the vector index
 const vectorIndex = async (req, res) => {
   try {
     const vectorIndex = await createVectorIndex();
@@ -36,4 +41,32 @@ const vectorIndex = async (req, res) => {
   }
 };
 
-export const controller = { method1, fileUpload, vectorIndex };
+// generateResponses
+const generateResponsesFromAI = async (req, res) => {
+  const { whoAreYou, input } = req.body;
+  try {
+    const responses = await generateResponses({ whoAreYou, input });
+    res.status(200).json({
+      message: "Responses generated",
+      response: responses,
+    });
+  } catch (error) {
+    console.error(`Error during generateResponses execution: ${error.message}`);
+  }
+};
+
+// test Document
+const testDocument = async (req, res) => {
+  const documents = await testDocumentRetrieval();
+  res.status(200).json({
+    message: "Documents retrieved",
+    response: documents,
+  });
+};
+export const controller = {
+  method1,
+  fileUpload,
+  vectorIndex,
+  generateResponsesFromAI,
+  testDocument,
+};

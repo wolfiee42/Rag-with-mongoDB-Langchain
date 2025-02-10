@@ -1,4 +1,8 @@
-import { getQueryResults } from "./05.retrieve-documents.js";
+/**
+ * The function `testDocumentRetrieval` retrieves documents based on a query and logs the page content
+ * of each document.
+ */
+import { getQueryResults } from "./retrieve-documents.js";
 
 async function testDocumentRetrieval() {
   try {
@@ -12,4 +16,4 @@ async function testDocumentRetrieval() {
     console.log(err.stack);
   }
 }
-testDocumentRetrieval().catch(console.dir);
+export default testDocumentRetrieval;
