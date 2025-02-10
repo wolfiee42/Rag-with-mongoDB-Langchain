@@ -17,6 +17,10 @@ app.use("/route", myRoute);
 
 // Server Listen Along with Database
 // connection(in case of data persistence)
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
 app.listen(PORT, (error) => {
   if (!error) {
     console.log(
