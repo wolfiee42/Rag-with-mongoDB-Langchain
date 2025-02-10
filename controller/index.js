@@ -31,6 +31,7 @@ const vectorIndex = async (req, res) => {
     res.status(500).json({
       message: "An error occurred during vector index creation",
       error: error.message,
+      response: "Already Index created.",
     });
   }
 };
