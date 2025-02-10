@@ -10,7 +10,8 @@ async function testDocumentRetrieval() {
     const documents = await getQueryResults(query);
 
     documents.forEach((doc) => {
-      console.log(doc.document.pageContent);
+      console.log("Text: ", doc?.chunks?.text);
+      console.log('Embedding: ', doc?.chunks?.embedding);
     });
   } catch (err) {
     console.log(err.stack);
