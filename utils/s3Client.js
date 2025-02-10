@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 // * load env variables
 dotenv.config({ path: ".env" });
 
+// * create s3 client for r2
 export const s3 = new S3Client({
   region: process.env.REGION,
   endpoint: process.env.ENDPOINT,
