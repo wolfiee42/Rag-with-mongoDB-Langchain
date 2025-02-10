@@ -20,4 +20,12 @@ router.post(
   controller.uploadPDFToR2
 );
 
+router.post("/file-upload", controller.fileUpload);
+
+router.post("/vector-index", controller.vectorIndex);
+
+router.post("/test-document", controller.testDocument);
+
+router.get("/generate-responses", controller.generateResponsesFromAI);
+
 export default router;

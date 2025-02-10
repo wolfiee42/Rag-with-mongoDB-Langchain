@@ -3,65 +3,10 @@ import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
 import pdfModel from "../utils/pdfModel.js";
-
-const method1 = (req, res) => {
-  res.json({ message: "Hello World" });
-};
-
-/**
- * @description Uploads a PDF to R2 bucket
- * @param {Object} req - Get a pdf file from the request (stored in req.file)
- * @param {Object} res - Send a response to the client with the key of the uploaded file when successful, or an error message if unsuccessful
- * @returns {Promise<void>} - Returns a promise that resolves when the file is uploaded successfully
- */
-const r2PDFUpload = async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).send("No file uploaded");
-
-    // * Step 1: Define the parameters for the PutObjectCommand with the file buffer and a unique key
-    const params = {
-      Bucket: process.env.BUCKET_NAME,
-      Key: `pdfs-${Date.now()}_${req.file.originalname}`,
-      Body: req.file.buffer,
-      ContentType: "application/pdf",
-    };
-    // * Step 2: Create a PutObjectCommand with the parameters
-    const command = new PutObjectCommand(params);
-    // * Step 3: Send the command to the S3 client
-    const result = await s3.send(command);
-    console.log("Upload result:", result);
-    res.json({ message: "Upload successful", key: params.Key });
-  } catch (error) {
-    console.log("Error uploading to S3:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * @description Retrieves a signed URL for downloading a PDF from the R2 bucket using the specified key.
- * @param {Object} req - The request object containing parameters, including the key of the PDF.
- * @param {Object} res - The response object used to send the signed URL or an error message back to the client.
- * @returns {Promise<void>} - Returns a promise that resolves when the signed URL is successfully generated or an error occurs.
- */
-
-const r2PDFGet = async (req, res) => {
-  try {
-    const { key } = req.params;
-    if (!key) return res.status(400).send("No key provided");
-
-    // * Step 1: Define the parameters for the GetObjectCommand with the specified key
-    const params = { Bucket: process.env.BUCKET_NAME, Key: key };
-    // * Step 2: Create a GetObjectCommand with the parameters
-    const command = new GetObjectCommand(params);
-    // * Step 3: Generate a signed URL using the GetObjectCommand and the S3 client
-    const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // * 3600 seconds = 1 hour
-    console.log("Generated signed URL:", url);
-    res.json({ url });
-  } catch (error) {
-    console.log("Error getting URL:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
+import ingestData from "../services/ingest-data.js";
+import createVectorIndex from "../services/rag-vector-index.js";
+import generateResponses from "../services/generate-responses.js";
+import testDocumentRetrieval from "../services/retrieve-documents-test.js";
 
 const uploadPDFToR2 = async (req, res) => {
   const session = await mongoose.startSession();
@@ -124,4 +69,66 @@ const uploadPDFToR2 = async (req, res) => {
   }
 };
 
-export const controller = { method1, r2PDFUpload, r2PDFGet, uploadPDFToR2 };
+// scraping the file and uploading the file to the database
+const fileUpload = async (req, res) => {
+  try {
+    const uploadingFile = await ingestData();
+    // because void returns undefined, we need to check if it's not undefined
+    if (!uploadingFile) {
+      res.json({ message: "File uploaded" });
+    }
+  } catch (err) {
+    console.error(`Error during ingestData execution: ${err.message}`);
+    res.status(500).json({
+      message: "An error occurred during file upload",
+      error: err.message,
+    });
+  }
+};
+
+// creating the vector index
+const vectorIndex = async (req, res) => {
+  try {
+    const vectorIndex = await createVectorIndex();
+    if (vectorIndex) {
+      res.json({ message: "Vector index created" });
+    }
+  } catch (error) {
+    console.error(`Error during createVectorIndex execution: ${error.message}`);
+    res.status(500).json({
+      message: "An error occurred during vector index creation",
+      error: error.message,
+      response: "Already Index created.",
+    });
+  }
+};
+
+// generateResponses
+const generateResponsesFromAI = async (req, res) => {
+  const { whoAreYou, input } = req.body;
+  try {
+    const responses = await generateResponses({ whoAreYou, input });
+    res.status(200).json({
+      message: "Responses generated",
+      response: responses,
+    });
+  } catch (error) {
+    console.error(`Error during generateResponses execution: ${error.message}`);
+  }
+};
+
+// test Document
+const testDocument = async (req, res) => {
+  const documents = await testDocumentRetrieval();
+  res.status(200).json({
+    message: "Documents retrieved",
+    response: documents,
+  });
+};
+export const controller = {
+  fileUpload,
+  vectorIndex,
+  generateResponsesFromAI,
+  testDocument,
+  uploadPDFToR2,
+};
