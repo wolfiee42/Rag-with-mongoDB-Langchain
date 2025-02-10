@@ -4,11 +4,16 @@ import getEmbeddings from "./get-embeddings.js";
 import fs from "fs";
 import PDF from "../models/pdfModel.js";
 import IngestedDocument from "../models/ingestedDocumentModel.js";
+
 /**
  * The function `ingestData` fetches a PDF file, splits its text into chunks, generates embeddings for
  * each chunk, and stores the chunked PDF data along with embeddings in MongoDB.
  */
 async function ingestData() {
+  // * Define the file path for temporary storage
+  const folderPath = process.cwd() + "/data/";
+  const filePath = folderPath + "document.pdf";
+
   try {
     // * Step 1: Get the PDF file from the database
     const doc = await PDF.findOne({});
@@ -16,24 +21,29 @@ async function ingestData() {
 
     // * Step 2: Fetch the raw PDF data from the stored URL
     const response = await fetch(doc.url);
-    if (!response.ok) throw new Error("Failed to fetch PDF");
+    if (!response.ok) throw new Error("Failed to fetch PDF from URL");
 
     // * Step 3: Convert response to Buffer
     const pdfBuffer = await response.arrayBuffer();
     const pdfData = Buffer.from(pdfBuffer);
 
-    // * store path to pdf file
-    const path = process.cwd() + "/data/";
-    if (!fs.existsSync(path)) {
-      fs.mkdirSync(path, { recursive: true });
+    // * Ensure the data folder exists, then write the PDF file to disk
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
     }
-    fs.writeFileSync(path + "document.pdf", pdfData); // * Temporary storage for processing
+    fs.writeFileSync(filePath, pdfData);
+    console.log("Temporary PDF file saved:", filePath);
 
-    // * Step 4: Load the PDF
-    const loader = new PDFLoader(path + "document.pdf");
-    const data = await loader.load();
+    // * Step 4: Load the PDF using PDFLoader
+    let data;
+    try {
+      const loader = new PDFLoader(filePath);
+      data = await loader.load();
+    } catch (loadError) {
+      throw new Error("Error loading PDF file: " + loadError.message);
+    }
 
-    // * Step 5: Chunk the text
+    // * Step 5: Chunk the text from the PDF file
     const textSplitter = new RecursiveCharacterTextSplitter({
       chunkSize: 400,
       chunkOverlap: 20,
@@ -41,30 +51,47 @@ async function ingestData() {
     const docs = await textSplitter.splitDocuments(data);
     console.log(`Successfully chunked the PDF into ${docs.length} documents.`);
 
-    // * Step 6: Process the chunks
-    console.log("Generating embeddings and storing in MongoDB...");
+    // * Step 6: Process the chunks and generate embeddings
+    console.log("Generating embeddings and preparing data for MongoDB...");
     const processedChunks = [];
-
-    for (const doc of docs) {
+    for (const chunk of docs) {
       try {
-        const embeddings = await getEmbeddings(doc.pageContent);
-        processedChunks.push({ text: doc.pageContent, embedding: embeddings });
-      } catch (error) {
-        console.error("Error generating embedding:", error);
+        const embeddings = await getEmbeddings(chunk.pageContent);
+        processedChunks.push({ text: chunk.pageContent, embedding: embeddings });
+      } catch (embedError) {
+        console.error("Error generating embedding for a chunk:", embedError);
       }
     }
 
-    // * Step 7: Store chunked data in MongoDB
-    await IngestedDocument.create({
-      pdfKey: doc.key,
-      chunks: processedChunks,
-    });
+    // * Step 7: Store or update chunked data in MongoDB
+    const existingIngested = await IngestedDocument.findOne({});
+    if (existingIngested) {
+      // * Update the existing document
+      existingIngested.chunks = processedChunks;
+      await existingIngested.save();
+      console.log("Existing ingested document updated successfully.");
+    } else {
+      // * Create a new document if none exists
+      await IngestedDocument.create({
+        pdfUrl: doc.url,
+        chunks: processedChunks,
+      });
+      console.log("New ingested document created successfully.");
+    }
 
-    console.log(
-      `Successfully stored ${processedChunks.length} document chunks.`
-    );
+    console.log(`Successfully stored ${processedChunks.length} document chunks.`);
   } catch (err) {
     console.error(`Error during ingestData execution: ${err.message}`);
+  } finally {
+    // * Step 8: Delete the temporary file after processing
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+        console.log("Temporary file deleted successfully.");
+      } catch (unlinkErr) {
+        console.error("Error deleting temporary file:", unlinkErr.message);
+      }
+    }
   }
 }
 
