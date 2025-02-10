@@ -1,6 +1,8 @@
 import { s3 } from "../utils/s3Client.js";
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import mongoose from "mongoose";
+import pdfModel from "../utils/pdfModel.js";
 
 const method1 = (req, res) => {
   res.json({ message: "Hello World" });
@@ -61,4 +63,52 @@ const r2PDFGet = async (req, res) => {
   }
 };
 
-export const controller = { method1, r2PDFUpload, r2PDFGet };
+const uploadPDFToR2 = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    if (!req.file) return res.status(400).send("No file uploaded");
+
+    // * Step 1: Upload the PDF to R2
+    const key = `pdfs/${Date.now()}_${req.file.originalname}`;
+    const params = {
+      Bucket: process.env.BUCKET_NAME,
+      Key: key,
+      Body: req.file.buffer,
+      ContentType: "application/pdf",
+    };
+
+    await s3.send(new PutObjectCommand(params));
+
+    // * Step 2: Generate a signed URL for accessing the file
+    // const getParams = { Bucket: process.env.BUCKET_NAME, Key: key };
+    // const command = new GetObjectCommand(getParams);
+    // const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+
+    const r2PublicURL = `${process.env.BUCKET_URL}/${key}`;
+
+    // * Step 3: Store the file metadata in MongoDB
+    const pdfData = new pdfModel({
+      key,
+      url: r2PublicURL,
+      // url: signedUrl,
+      uploadedAt: new Date(),
+    });
+
+    await pdfData.save({ session });
+
+    // * Step 4: Commit the transaction if everything succeeds
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({ message: "Upload successful", key, url: r2PublicURL });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error uploading to R2:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const controller = { method1, r2PDFUpload, r2PDFGet, uploadPDFToR2 };

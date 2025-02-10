@@ -4,6 +4,7 @@ dotenv.config();
 
 // Local Modules
 import myRoute from "./routes/index.js";
+import mongoose from "mongoose";
 
 // Server Initialization
 const app = express();
@@ -21,8 +22,19 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.listen(PORT, (error) => {
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.ATLAS_CONNECTION_STRING);
+    console.log("MongoDB Connected");
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+app.listen(PORT, async(error) => {
   if (!error) {
+    // * Database Connection
+    await  connectDB();
     console.log(
       `Server is Successfully Running, and App is listening on port ${PORT}`
     );

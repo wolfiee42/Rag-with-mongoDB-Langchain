@@ -14,4 +14,10 @@ router.post(
 // * get pdf from r2 by key (returned by previous endpoint)
 router.get("/get-pdf/:key", controller.r2PDFGet);
 
+router.post(
+  "/upload-pdf-to-r2",
+  uploadPDFToMulterMemory.single("file"),
+  controller.uploadPDFToR2
+);
+
 export default router;
