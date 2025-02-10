@@ -52,7 +52,7 @@ const r2PDFGet = async (req, res) => {
     // * Step 2: Create a GetObjectCommand with the parameters
     const command = new GetObjectCommand(params);
     // * Step 3: Generate a signed URL using the GetObjectCommand and the S3 client
-    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // * 3600 seconds = 1 hour
     console.log("Generated signed URL:", url);
     res.json({ url });
   } catch (error) {
