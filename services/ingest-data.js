@@ -2,74 +2,70 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import getEmbeddings from "./get-embeddings.js";
 import fs from "fs";
-
-// main function of the operation. i.e. starting of the operation
-
+import PDF from "../models/pdfModel.js";
+import IngestedDocument from "../models/ingestedDocumentModel.js";
 /**
  * The function `ingestData` fetches a PDF file, splits its text into chunks, generates embeddings for
- * each chunk, and inserts the chunked PDF data along with embeddings into an Atlas cluster in batches.
+ * each chunk, and stores the chunked PDF data along with embeddings in MongoDB.
  */
 async function ingestData() {
   try {
-    // * step 1: getting the pdf file from the r2 bucket
-    const rawData = await fetch(
-      "https://pub-5cd27299eac74caa8dfae0dc8ee78e15.r2.dev/test-bucket/Sci.Tech-RevandScience.pdf"
-    );
+    // * Step 1: Get the PDF file from the database
+    const doc = await PDF.findOne({});
+    if (!doc) throw new Error("No PDF found in the database");
 
-    // * step 2: writing the pdf file to the local machine
-    const pdfBuffer = await rawData.arrayBuffer();
+    // * Step 2: Fetch the raw PDF data from the stored URL
+    const response = await fetch(doc.url);
+    if (!response.ok) throw new Error("Failed to fetch PDF");
+
+    // * Step 3: Convert response to Buffer
+    const pdfBuffer = await response.arrayBuffer();
     const pdfData = Buffer.from(pdfBuffer);
-    fs.writeFileSync("Sci.Tech-RevandScience.pdf", pdfData); //! should be changed to the website's concept name
 
-    // * step 3: loading the pdf file
-    const loader = new PDFLoader(`Sci.Tech-RevandScience.pdf`); //! should be changed to the website's concept name
+    // * store path to pdf file
+    const path = process.cwd() + "/data/";
+    if (!fs.existsSync(path)) {
+      fs.mkdirSync(path, { recursive: true });
+    }
+    fs.writeFileSync(path + "document.pdf", pdfData); // * Temporary storage for processing
+
+    // * Step 4: Load the PDF
+    const loader = new PDFLoader(path + "document.pdf");
     const data = await loader.load();
 
-    // * step 4: chunking the text from the pdf file
+    // * Step 5: Chunk the text
     const textSplitter = new RecursiveCharacterTextSplitter({
       chunkSize: 400,
       chunkOverlap: 20,
     });
-
-    // * step 5: splitting the text into chunks
     const docs = await textSplitter.splitDocuments(data);
     console.log(`Successfully chunked the PDF into ${docs.length} documents.`);
 
-    // * step 6: connecting to the atlas cluster
-    await client.connect();
-    const db = client.db("rag_db");
-    const collection = db.collection("test");
+    // * Step 6: Process the chunks
+    console.log("Generating embeddings and storing in MongoDB...");
+    const processedChunks = [];
 
-    // * step 7: processing the documents in batches of 50 so that it doesn't overload the memory
-    console.log("Generating embeddings and inserting documents.");
-    let docCount = 0;
-
-    // * step 8: processing the documents in batches of 50 so that it doesn't overload the memory
-    const batchSize = 50;
-    for (let i = 0; i < docs.length; i += batchSize) {
-      const batch = docs.slice(i, i + batchSize);
-      await Promise.all(
-        batch.map(async (doc) => {
-          try {
-            const embeddings = await getEmbeddings(doc.pageContent);
-
-            // * step 9: inserting the embeddings and the chunked PDF data into the atlas
-            await collection.insertOne({
-              document: doc,
-              embedding: embeddings,
-            });
-            docCount += 1;
-          } catch (insertError) {
-            console.error("Error inserting document:", insertError);
-          }
-        })
-      );
-      console.log(`Successfully inserted ${docCount} documents in this batch.`);
+    for (const doc of docs) {
+      try {
+        const embeddings = await getEmbeddings(doc.pageContent);
+        processedChunks.push({ text: doc.pageContent, embedding: embeddings });
+      } catch (error) {
+        console.error("Error generating embedding:", error);
+      }
     }
-    console.log(`Successfully inserted a total of ${docCount} documents.`);
+
+    // * Step 7: Store chunked data in MongoDB
+    await IngestedDocument.create({
+      pdfKey: doc.key,
+      chunks: processedChunks,
+    });
+
+    console.log(
+      `Successfully stored ${processedChunks.length} document chunks.`
+    );
   } catch (err) {
     console.error(`Error during ingestData execution: ${err.message}`);
-  } 
+  }
 }
 
 export default ingestData;

@@ -6,4 +6,5 @@ const pdfSchema = new mongoose.Schema({
   uploadedAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.model("PDF", pdfSchema);
+const PDF = mongoose.model("PDF", pdfSchema);
+export default PDF;

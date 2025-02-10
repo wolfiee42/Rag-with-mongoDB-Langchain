@@ -4,8 +4,8 @@ import ingestData from "../services/ingest-data.js";
 import createVectorIndex from "../services/rag-vector-index.js";
 import generateResponses from "../services/generate-responses.js";
 import testDocumentRetrieval from "../services/retrieve-documents-test.js";
-import pdfModel from "../models/pdfModel.js";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import PDF from "../models/pdfModel.js";
 
 // * file upload
 const uploadPDFToR2 = async (req, res) => {
@@ -13,7 +13,7 @@ const uploadPDFToR2 = async (req, res) => {
   session.startTransaction();
 
   try {
-    if (!req.file) return res.status(400).send("No file uploaded");
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     // * Upload the PDF to R2
     const key = `pdfs/${Date.now()}_${req.file.originalname}`;
@@ -26,20 +26,19 @@ const uploadPDFToR2 = async (req, res) => {
 
     await s3.send(new PutObjectCommand(params));
 
-    // * Get the public URL of the uploaded PDF
+    // * Construct the file's public URL
     const r2PublicURL = `${process.env.BUCKET_URL}/${key}`;
 
-    // * first check if the pdf already exists in the database
-    const existingPDF = await pdfModel.findOne();
-    // * If it does, update the existing record
+    // * Check if a PDF already exists in the database within the session
+    const existingPDF = await PDF.findOne({}, null, { session });
+
     if (existingPDF) {
+      // * If PDF exists, update the existing record
       existingPDF.key = key;
       existingPDF.url = r2PublicURL;
-
-      await existingPDF.save();
+      await existingPDF.save({ session });
 
       await session.commitTransaction();
-      session.endSession();
       return res.json({
         message: "PDF updated successfully",
         key,
@@ -47,25 +46,25 @@ const uploadPDFToR2 = async (req, res) => {
       });
     }
 
-    // * If it doesn't, create a new record in the database
-    const pdfData = new pdfModel({
+    // * If it doesn't exist, create a new record in the database
+    const newPDF = new PDF({
       key,
       url: r2PublicURL,
       uploadedAt: new Date(),
     });
 
-    await pdfData.save({ session });
+    await newPDF.save({ session });
 
-    // * Step 4: Commit the transaction if everything succeeds
+    // * Commit the transaction
     await session.commitTransaction();
-    session.endSession();
-
     res.json({ message: "PDF Stored Successfully", key, url: r2PublicURL });
   } catch (error) {
+    // * Abort transaction in case of error
     await session.abortTransaction();
-    session.endSession();
-    console.error("Error uploading to R2:", error);
     res.status(500).json({ error: error.message });
+  } finally {
+    // * Always end the session
+    session.endSession();
   }
 };
 
