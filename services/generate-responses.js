@@ -1,10 +1,11 @@
 import { getQueryResults } from "./retrieve-documents.js";
 import { HfInference } from "@huggingface/inference";
 import dotenv from "dotenv";
+import WhoAreYou from "../models/whoareyouModel.js";
 
 dotenv.config({ path: ".env" });
 
-async function generateResponses({ whoAreYou, input }) {
+async function generateResponses({ input }) {
   try {
     // Specify search query and retrieve relevant documents
     const query = "Context";
@@ -20,10 +21,10 @@ async function generateResponses({ whoAreYou, input }) {
     });
     console.log("textDocuments", textDocuments);
 
-    // const input =
-    //   "can you explain the importance of the topic in our life based on the given context? make it short and concise and bullet points";
-    // const whoAreYou =
-    //   "You are a scientist who is an expert in the field of science and technology. and recently published a paper on the topic of quran in science and technology. and your publish paper is attacted to you by the context. ";
+    const whoAreYouData = await WhoAreYou.findOne({});
+    const whoAreYou = whoAreYouData?.whoAreYou;
+    console.log("whoAreYou", whoAreYou);
+   
 
     // Create a prompt consisting of the question and context to pass to the LLM
     const prompt = `Analysis the given input, based on the given context.

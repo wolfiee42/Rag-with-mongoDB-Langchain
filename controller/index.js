@@ -6,6 +6,7 @@ import generateResponses from "../services/generate-responses.js";
 import testDocumentRetrieval from "../services/retrieve-documents-test.js";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import PDF from "../models/pdfModel.js";
+import WhoAreYou from "../models/whoareyouModel.js";
 
 // * file upload
 const uploadPDFToR2 = async (req, res) => {
@@ -125,10 +126,38 @@ const testDocument = async (req, res) => {
   });
 };
 
+// * create or update a whoAreYou
+const createOrUpdateWhoAreYou = async (req, res) => {
+  const { whoAreYou } = req.body;
+
+  try {
+    // Find the existing prompt and update it, or create a new one if none exists.
+    const prompt = await WhoAreYou.findOneAndUpdate(
+      {}, // empty query matches the first document found (assuming only one prompt exists)
+      { whoAreYou },
+      { new: true, upsert: true } // new: return the updated document; upsert: create if not found
+    );
+
+    res.status(200).json({
+      message: "Prompt created or updated successfully",
+      response: prompt,
+    });
+  } catch (error) {
+    console.error(
+      `Error during createOrUpdateWhoAreYou execution: ${error.message}`
+    );
+    res.status(500).json({
+      message: "An error occurred while creating or updating the prompt",
+      error: error.message,
+    });
+  }
+};
+
 export const controller = {
   fileUpload,
   vectorIndex,
   generateResponsesFromAI,
   testDocument,
   uploadPDFToR2,
+  createOrUpdateWhoAreYou,
 };

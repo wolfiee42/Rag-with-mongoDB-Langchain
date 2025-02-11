@@ -9,10 +9,15 @@ async function testDocumentRetrieval() {
     const query = "What is the purpose of the pdf?";
     const documents = await getQueryResults(query);
 
-    documents.forEach((doc) => {
-      console.log("Text: ", doc?.chunks?.text);
-      console.log('Embedding: ', doc?.chunks?.embedding);
+    let textDocuments = "";
+    documents.forEach((document) => {
+      document.chunks.forEach((chunk) => {
+        textDocuments += chunk.text + "\n";
+      });
     });
+    console.log("textDocuments", textDocuments);
+
+    return textDocuments;
   } catch (err) {
     console.log(err.stack);
   }
