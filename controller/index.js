@@ -105,9 +105,9 @@ const vectorIndex = async (req, res) => {
 
 // * generateResponses
 const generateResponsesFromAI = async (req, res) => {
-  const { whoAreYou, input } = req.body;
+  const { input } = req.body;
   try {
-    const responses = await generateResponses({ whoAreYou, input });
+    const responses = await generateResponses({ input });
     res.status(200).json({
       message: "Responses generated",
       response: responses,
