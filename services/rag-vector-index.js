@@ -16,7 +16,7 @@ async function createVectorIndex() {
     console.log("creating vector index");
     // * step 3: defining the atlas vector search index
     const index = {
-      name: "vector_index_v1",
+      name: "vector_index",
       type: "vectorSearch",
       definition: {
         fields: [

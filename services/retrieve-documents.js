@@ -17,7 +17,7 @@ export async function getQueryResults(query) {
     const pipeline = [
       {
         $vectorSearch: {
-          index: "vector_index_v1",
+          index: "vector_index",
           queryVector: queryEmbeddings,
           path: "chunks.embedding",
           exact: true,
@@ -34,7 +34,6 @@ export async function getQueryResults(query) {
 
     // Retrieve documents from Atlas using this Vector Search query
     const result = collection.aggregate(pipeline);
-
     const arrayOfQueryDocs = [];
     for await (const doc of result) {
       arrayOfQueryDocs.push(doc);
