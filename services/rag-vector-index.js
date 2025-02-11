@@ -8,10 +8,9 @@ dotenv.config({ path: ".env" });
  * The purpose of this function is to create a vector index in the Atlas cluster.
  */
 async function createVectorIndex() {
+  // * step 1: connecting to the atlas cluster
+  const client = new MongoClient(process.env.ATLAS_CONNECTION_STRING);
   try {
-    // * step 1: connecting to the atlas cluster
-    const client = new MongoClient(process.env.ATLAS_CONNECTION_STRING);
-
     const db = client.db("test");
     const collection = db.collection("ingesteddocuments");
     console.log("creating vector index");
