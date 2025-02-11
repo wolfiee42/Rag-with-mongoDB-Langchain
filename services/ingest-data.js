@@ -58,6 +58,7 @@ async function ingestData() {
       try {
         const embeddings = await getEmbeddings(chunk.pageContent);
         processedChunks.push({ text: chunk.pageContent, embedding: embeddings });
+        console.log(`Successfully processed chunk: ${chunk.pageContent}`);
       } catch (embedError) {
         console.error("Error generating embedding for a chunk:", embedError);
       }

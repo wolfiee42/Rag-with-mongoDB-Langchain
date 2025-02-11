@@ -11,5 +11,5 @@ export const uploadPDFToMulterMemory = multer({
     }
     cb(null, true);
   },
-  limits: { fileSize: 30 * 1024 * 1024 }, // * 30MB limit
+  limits: { fileSize: 200 * 1024 * 1024 }, // * 200MB limit
 });
